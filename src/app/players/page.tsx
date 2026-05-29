@@ -17,7 +17,7 @@ export default function PlayersPage() {
         {players.map((player) => (
           <article
             key={player.id}
-            className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm"
+            className="rounded-3xl border border-border-soft bg-surface-strong p-5 shadow-sm"
           >
             <div className="flex items-start justify-between gap-3">
               <div>

@@ -122,6 +122,40 @@ export default function TeamPage() {
 
     updateEditor(editorId, { pool: target.pool.filter((entry) => entry.key !== entryKey) });
   }
+
+  function reorderPool(editorId: string, newPool: import("@/lib/team/editor-types").PoolEditorEntry[]) {
+    updateEditor(editorId, { pool: newPool });
+  }
+
+  async function deletePlayer(editor: PlayerEditor) {
+    if (editor.isNew) {
+      setNewEditors((previous) => previous.filter((item) => item.id !== editor.id));
+      return;
+    }
+
+    const nextDataset: TeamDataset = {
+      ...dataset,
+      players: dataset.players.filter((p) => p.id !== editor.id),
+      championPool: dataset.championPool.filter((entry) => entry.playerId !== editor.id),
+    };
+
+    setExistingOverrides((previous) => {
+      const copy = { ...previous };
+      delete copy[editor.id];
+      return copy;
+    });
+
+    setError(null);
+    setMessage(null);
+
+    try {
+      saveDataset(nextDataset);
+      await saveDatasetShared(nextDataset);
+      setMessage(`Deleted ${editor.summonerName || "player"} and synced.`);
+    } catch {
+      setMessage(`Deleted ${editor.summonerName || "player"} locally.`);
+    }
+  }
   async function savePlayer(editor: PlayerEditor) {
     if (!editor.summonerName.trim()) {
       setError("Player name is required before saving.");
@@ -208,7 +242,7 @@ export default function TeamPage() {
       title="Team"
       subtitle="Manage team members and evolving champion pools with per-player saves."
     >
-      <section className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm">
+      <section className="rounded-3xl border border-border-soft bg-surface-strong p-5 shadow-sm">
         <div className="flex items-center justify-between gap-3">
           <div>
             <h2 className="text-xl font-semibold tracking-tight text-ink-strong">Roster</h2>
@@ -218,7 +252,7 @@ export default function TeamPage() {
           </div>
           <button
             onClick={onAddPlayer}
-            className="rounded-xl bg-ink-strong px-4 py-2 text-sm font-semibold text-white"
+            className="rounded-xl bg-cta-bg px-4 py-2 text-sm font-semibold text-cta-text"
           >
             + Player
           </button>
@@ -249,11 +283,13 @@ export default function TeamPage() {
               onRemovePoolEntry={removePoolEntry}
               onAddPoolEntry={addPoolEntry}
               onSavePlayer={savePlayer}
+              onDeletePlayer={deletePlayer}
+              onReorderPool={reorderPool}
               clampComfort={clampComfort}
             />
           ))
         ) : (
-          <article className="rounded-3xl border border-border-soft bg-white/85 p-5 text-sm text-ink-soft shadow-sm">
+          <article className="rounded-3xl border border-border-soft bg-surface-strong p-5 text-sm text-ink-soft shadow-sm">
             No team members yet. Click + Player to start.
           </article>
         )}

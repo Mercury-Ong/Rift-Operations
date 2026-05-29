@@ -4,7 +4,7 @@ import { AppShell } from "@/components/app-shell";
 import { ChampionPickColumns } from "@/components/scrims/champion-pick-columns";
 import { ScrimHistoryList } from "@/components/scrims/scrim-history-list";
 import { useTeamDataset } from "@/lib/hooks/use-team-dataset";
-import { ScrimOutcome, TeamDataset } from "@/lib/models";
+import { ScrimOutcome, Side, TeamDataset } from "@/lib/models";
 import {
   arePicksComplete,
   arePicksUnique,
@@ -26,6 +26,7 @@ export default function ScrimsPage() {
   const [scrimOpponent, setScrimOpponent] = useState("");
   const [scrimDate, setScrimDate] = useState("");
   const [scrimResult, setScrimResult] = useState<ScrimOutcome>("WIN");
+  const [scrimSide, setScrimSide] = useState<Side>("BLUE");
   const [scrimNotes, setScrimNotes] = useState("");
   const [scrimDuration, setScrimDuration] = useState("30");
   const [scrimKillScore, setScrimKillScore] = useState("12:8");
@@ -102,7 +103,7 @@ export default function ScrimsPage() {
     const parsedGames: TeamDataset["scrims"][number]["games"] = [
       {
         game: 1,
-        side: "BLUE",
+        side: scrimSide,
         durationMinutes,
         killsFor,
         killsAgainst,
@@ -163,7 +164,7 @@ export default function ScrimsPage() {
               value={scrimOpponent}
               onChange={(event) => setScrimOpponent(event.target.value)}
               placeholder="Opponent"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             />
           </label>
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
@@ -172,7 +173,7 @@ export default function ScrimsPage() {
               type="date"
               value={scrimDate}
               onChange={(event) => setScrimDate(event.target.value)}
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             />
           </label>
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
@@ -180,21 +181,33 @@ export default function ScrimsPage() {
             <select
               value={scrimResult}
               onChange={(event) => setScrimResult(event.target.value as ScrimOutcome)}
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             >
               <option value="WIN">WIN</option>
               <option value="LOSS">LOSS</option>
             </select>
           </label>
-          <div className="grid items-end">
-            <button
-              onClick={onAddScrimResult}
-              disabled={saving}
-              className="rounded-xl bg-ink-strong px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            My Side
+            <select
+              value={scrimSide}
+              onChange={(event) => setScrimSide(event.target.value as Side)}
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             >
-              Add scrim
-            </button>
-          </div>
+              <option value="BLUE">BLUE</option>
+              <option value="RED">RED</option>
+            </select>
+          </label>
+        </div>
+
+        <div className="mt-2 grid items-end">
+          <button
+            onClick={onAddScrimResult}
+            disabled={saving}
+            className="rounded-xl bg-cta-bg px-3 py-2 text-sm font-semibold text-cta-text transition hover:opacity-90 disabled:opacity-60 md:justify-self-end"
+          >
+            Add scrim
+          </button>
         </div>
 
         <div className="mt-2 grid gap-2 md:grid-cols-2">
@@ -206,7 +219,7 @@ export default function ScrimsPage() {
               value={scrimDuration}
               onChange={(event) => setScrimDuration(event.target.value)}
               placeholder="Duration (minutes)"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             />
           </label>
           <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
@@ -215,7 +228,7 @@ export default function ScrimsPage() {
               value={scrimKillScore}
               onChange={(event) => setScrimKillScore(event.target.value)}
               placeholder="e.g. 21:15"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
             />
           </label>
         </div>
@@ -231,7 +244,7 @@ export default function ScrimsPage() {
         <textarea
           value={scrimNotes}
           onChange={(event) => setScrimNotes(event.target.value)}
-          className="mt-2 h-16 w-full rounded-xl border border-border-soft bg-white px-3 py-2 text-xs text-ink-strong outline-none"
+          className="mt-2 h-16 w-full rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-xs text-ink-strong outline-none"
           placeholder="Coach notes"
         />
 

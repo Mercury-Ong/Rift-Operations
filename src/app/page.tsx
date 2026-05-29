@@ -115,7 +115,7 @@ export default function Home() {
             {insights.suggestedMatches.map((match) => (
               <div
                 key={match.role}
-                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                className="rounded-2xl border border-border-soft bg-accent-wash px-4 py-3"
               >
                 <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
                   {match.roleLabel}

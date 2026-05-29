@@ -15,10 +15,10 @@ export function MetricCard({
 }) {
   const toneClass =
     tone === "positive"
-      ? "border-emerald-200 bg-emerald-50"
+      ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/40"
       : tone === "focus"
-        ? "border-cyan-200 bg-cyan-50"
-        : "border-slate-200 bg-white/90";
+        ? "border-accent-soft/40 bg-accent-wash"
+        : "border-border-soft bg-surface-strong";
 
   return (
     <article className={`rounded-3xl border p-5 shadow-sm ${toneClass}`}>

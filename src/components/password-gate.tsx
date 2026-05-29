@@ -61,7 +61,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center overflow-hidden px-4 py-10">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_25%_20%,rgba(14,165,233,0.18),transparent_38%),radial-gradient(circle_at_80%_10%,rgba(245,158,11,0.18),transparent_35%),linear-gradient(180deg,#f8fbff_0%,#e8f3ff_100%)]" />
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_15%_0%,rgba(99,102,241,0.15),transparent_50%),radial-gradient(ellipse_at_85%_10%,rgba(167,139,250,0.12),transparent_45%),linear-gradient(180deg,#f4f6fb_0%,#eceffe_100%)]" />
       <div className="relative w-full max-w-md rounded-3xl border border-white/60 bg-white/80 p-6 shadow-[0_20px_70px_rgba(15,23,42,0.15)] backdrop-blur">
         <p className="text-xs font-semibold uppercase tracking-[0.24em] text-accent-strong">
           Rift Operations
@@ -93,7 +93,7 @@ export function PasswordGate({ children }: { children: ReactNode }) {
           <button
             type="submit"
             disabled={loading}
-            className="inline-flex w-full items-center justify-center rounded-2xl bg-ink-strong px-4 py-3 text-sm font-semibold text-white transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center rounded-2xl bg-cta-bg px-4 py-3 text-sm font-semibold text-cta-text transition hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {loading ? "Checking..." : "Unlock Dashboard"}
           </button>

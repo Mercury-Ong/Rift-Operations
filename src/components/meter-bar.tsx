@@ -18,9 +18,9 @@ export function MeterBar({
           {suffix}
         </p>
       </div>
-      <div className="h-2 rounded-full bg-slate-200">
+      <div className="h-2 rounded-full bg-border-soft/60">
         <div
-          className="h-2 rounded-full bg-linear-to-r from-cyan-500 to-blue-500"
+          className="h-2 rounded-full bg-linear-to-r from-accent-strong to-accent-soft"
           style={{ width: `${clamped}%` }}
         />
       </div>

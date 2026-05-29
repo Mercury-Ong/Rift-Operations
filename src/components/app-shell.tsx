@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ReactNode } from "react";
+import { DarkModeToggle } from "@/components/dark-mode-toggle";
 
 const links = [
   { href: "/", label: "Dashboard" },
@@ -25,16 +26,17 @@ export function AppShell({
             <h1 className="mt-2 text-3xl font-semibold tracking-tight text-ink-strong md:text-4xl">{title}</h1>
             <p className="mt-2 max-w-2xl text-sm text-ink-soft md:text-base">{subtitle}</p>
           </div>
-          <nav className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:justify-end">
+          <nav className="grid grid-cols-2 gap-2 md:flex md:flex-wrap md:items-center md:justify-end">
             {links.map((link) => (
               <Link
                 key={link.href}
                 href={link.href}
-                className="rounded-2xl border border-border-soft bg-white/65 px-4 py-2 text-sm font-medium text-ink-strong transition hover:border-accent-soft hover:bg-accent-wash"
+                className="rounded-2xl border border-border-soft bg-surface-strong px-4 py-2 text-sm font-medium text-ink-strong transition hover:border-accent-soft hover:bg-accent-wash hover:text-accent-strong"
               >
                 {link.label}
               </Link>
             ))}
+            <DarkModeToggle />
           </nav>
         </div>
       </header>

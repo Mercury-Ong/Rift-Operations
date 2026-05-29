@@ -297,18 +297,18 @@ export default function CoachPage() {
                   value={email}
                   onChange={(event) => setEmail(event.target.value)}
                   placeholder="Coach email"
-                  className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+                  className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
                 />
                 <input
                   type="password"
                   value={password}
                   onChange={(event) => setPassword(event.target.value)}
                   placeholder="Coach password"
-                  className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+                  className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
                 />
                 <button
                   onClick={onSignIn}
-                  className="rounded-xl bg-ink-strong px-3 py-2 text-sm font-semibold text-white"
+                  className="rounded-xl bg-cta-bg px-3 py-2 text-sm font-semibold text-cta-text transition hover:opacity-90"
                 >
                   Sign in
                 </button>
@@ -317,13 +317,13 @@ export default function CoachPage() {
               <>
                 <button
                   onClick={onPullShared}
-                  className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-medium text-ink-strong"
+                  className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-medium text-ink-strong"
                 >
                   Pull latest shared
                 </button>
                 <button
                   onClick={onSignOut}
-                  className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-medium text-ink-strong"
+                  className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm font-medium text-ink-strong"
                 >
                   Sign out
                 </button>
@@ -345,12 +345,12 @@ export default function CoachPage() {
               value={playerName}
               onChange={(event) => setPlayerName(event.target.value)}
               placeholder="Player name"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             />
             <select
               value={playerRole}
               onChange={(event) => setPlayerRole(event.target.value as PlayerRole)}
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             >
               {roleOptions.map((role) => (
                 <option key={role} value={role}>
@@ -362,18 +362,18 @@ export default function CoachPage() {
               value={playerRank}
               onChange={(event) => setPlayerRank(event.target.value)}
               placeholder="Rank (e.g. Master 200 LP)"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             />
             <input
               value={playerRegion}
               onChange={(event) => setPlayerRegion(event.target.value)}
               placeholder="Region (e.g. EUW)"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             />
             <textarea
               value={playerPoolLines}
               onChange={(event) => setPlayerPoolLines(event.target.value)}
-              className="h-24 rounded-xl border border-border-soft bg-white px-3 py-2 text-xs text-ink-strong outline-none"
+              className="h-24 rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-xs text-ink-strong outline-none"
               placeholder="championId,proficiency,games"
             />
             <button
@@ -393,27 +393,27 @@ export default function CoachPage() {
               value={scrimOpponent}
               onChange={(event) => setScrimOpponent(event.target.value)}
               placeholder="Opponent"
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             />
             <input
               type="date"
               value={scrimDate}
               onChange={(event) => setScrimDate(event.target.value)}
-              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+              className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
             />
             <div className="grid grid-cols-3 gap-2">
               <input
                 value={scrimPatch}
                 onChange={(event) => setScrimPatch(event.target.value)}
                 placeholder="Patch"
-                className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+                className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
               />
               <select
                 value={scrimFormat}
                 onChange={(event) =>
                   setScrimFormat(event.target.value as "BO3" | "BO5")
                 }
-                className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+                className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
               >
                 <option value="BO3">BO3</option>
                 <option value="BO5">BO5</option>
@@ -423,7 +423,7 @@ export default function CoachPage() {
                 onChange={(event) =>
                   setScrimResult(event.target.value as ScrimOutcome)
                 }
-                className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
+                className="rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-sm text-ink-strong outline-none"
               >
                 <option value="WIN">WIN</option>
                 <option value="LOSS">LOSS</option>
@@ -432,13 +432,13 @@ export default function CoachPage() {
             <textarea
               value={scrimNotes}
               onChange={(event) => setScrimNotes(event.target.value)}
-              className="h-16 rounded-xl border border-border-soft bg-white px-3 py-2 text-xs text-ink-strong outline-none"
+              className="h-16 rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-xs text-ink-strong outline-none"
               placeholder="Coach notes"
             />
             <textarea
               value={scrimGamesLines}
               onChange={(event) => setScrimGamesLines(event.target.value)}
-              className="h-24 rounded-xl border border-border-soft bg-white px-3 py-2 text-xs text-ink-strong outline-none"
+              className="h-24 rounded-xl border border-border-soft bg-surface-strong px-3 py-2 text-xs text-ink-strong outline-none"
               placeholder="side,duration,killsFor,killsAgainst,objectiveControl"
             />
             <button

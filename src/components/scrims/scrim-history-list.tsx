@@ -2,6 +2,7 @@ import { SCRIM_ROLE_LABELS, SCRIM_ROLE_ORDER } from "@/lib/scrims/form-utils";
 
 interface ScrimGameView {
   game: number;
+  side: "BLUE" | "RED";
   durationMinutes: number;
   killsFor: number;
   killsAgainst: number;
@@ -56,7 +57,7 @@ export function ScrimHistoryList({
 }: ScrimHistoryListProps) {
   if (!scrims.length) {
     return (
-      <article className="rounded-3xl border border-border-soft bg-white/85 p-5 text-sm text-ink-soft shadow-sm">
+      <article className="rounded-3xl border border-border-soft bg-surface-strong p-5 text-sm text-ink-soft shadow-sm">
         No scrim history yet. Add your first result above.
       </article>
     );
@@ -67,7 +68,7 @@ export function ScrimHistoryList({
       {scrims.map((scrim) => (
         <article
           key={scrim.id}
-          className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm"
+          className="rounded-3xl border border-border-soft bg-surface-strong p-5 shadow-sm"
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
@@ -88,15 +89,15 @@ export function ScrimHistoryList({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-3">
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="rounded-2xl border border-border-soft bg-accent-wash px-4 py-3">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Game Score</p>
               <p className="mt-1 text-lg font-semibold text-ink-strong">{scrim.gameScore}</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="rounded-2xl border border-border-soft bg-accent-wash px-4 py-3">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Average Duration</p>
               <p className="mt-1 text-lg font-semibold text-ink-strong">{scrim.averageDuration}m</p>
             </div>
-            <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+            <div className="rounded-2xl border border-border-soft bg-accent-wash px-4 py-3">
               <p className="text-xs uppercase tracking-wider text-ink-soft">Notes</p>
               <p className="mt-1 text-sm text-ink-strong">{scrim.notes}</p>
             </div>
@@ -107,6 +108,7 @@ export function ScrimHistoryList({
               <thead>
                 <tr className="text-left text-ink-soft">
                   <th className="px-3">Game</th>
+                  <th className="px-3">Side</th>
                   <th className="px-3">Duration</th>
                   <th className="px-3">Kill Score (Blue:Red)</th>
                   <th className="px-3">Blue Picks</th>
@@ -115,8 +117,19 @@ export function ScrimHistoryList({
               </thead>
               <tbody>
                 {scrim.games.map((game) => (
-                  <tr key={game.game} className="rounded-2xl bg-slate-50 text-ink-strong">
+                  <tr key={game.game} className="rounded-2xl bg-accent-wash text-ink-strong">
                     <td className="rounded-l-xl px-3 py-2">{game.game}</td>
+                    <td className="px-3 py-2">
+                      <span
+                        className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold ${
+                          game.side === "BLUE"
+                            ? "bg-blue-100 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300"
+                            : "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300"
+                        }`}
+                      >
+                        {game.side}
+                      </span>
+                    </td>
                     <td className="px-3 py-2">{game.durationMinutes}m</td>
                     <td className="px-3 py-2">
                       {game.killsFor}-{game.killsAgainst}
