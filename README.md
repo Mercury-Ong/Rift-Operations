@@ -1,13 +1,21 @@
-# LoL Team Tracker
+# Rift Operations
 
-A modern League of Legends team platform to track:
+A League of Legends team management platform built for competitive teams to track scrim results, champion pools, draft synergies, and analytics in one place.
 
-- Champion pools
-- Team synergies
-- Scrim results and history
-- Analytics dashboard snapshots
+**Live site:** https://mercury-ong.github.io/Rift-Operations/
 
-Built with Next.js + TypeScript + Tailwind CSS.
+## Features
+
+- **Dashboard** — Scrim win rate, kill delta, game length, draft diversity, most-played champions (team side only), synergy pairs, suggested picks per role, and recent results
+- **Scrims** — Log scrim blocks with per-game champion picks (role-ordered), kill scores, and duration
+- **Players** — Manage the roster and individual champion pools with proficiency ratings
+- **Synergies** — Track champion pair win rates and sample sizes
+- **Team** — View and edit the full team dataset
+- **Coach** — Authenticated admin form for bulk data entry (requires Supabase login)
+
+## Tech Stack
+
+Next.js 16 · TypeScript · Tailwind CSS · Supabase (optional real-time sync) · GitHub Pages (static export)
 
 ## Local Development
 
@@ -18,71 +26,47 @@ npm run dev
 
 Open http://localhost:3000
 
-## Team Password Gate
+## Environment Variables
 
-This app includes a client-side password gate for shared team access.
+Create a `.env.local` file for local development:
 
-- Users must enter the shared password before viewing the dashboard.
-- Access is remembered in browser session storage.
-- The password is validated using a SHA-256 hash injected at build time.
+```bash
+# Optional — enables real-time sync across browsers via Supabase
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
 
-Important: This is a frontend gate and not server-side authentication.
+# Optional — sets the team access password (defaults to 12345 if omitted)
+ACCESS_PASSWORD=your_team_password
+```
 
-Current default password: `12345`
+Without Supabase configured, the app runs fully offline using browser local storage.
 
 ## Deploy to GitHub Pages
 
-The repository includes an automated GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
+Deployments are automated via GitHub Actions on every push to `master`.
 
-### One-time GitHub setup
+### One-time setup
 
-1. Push this repository to GitHub.
-2. In repository settings, open `Pages`.
-3. Set `Build and deployment` source to `GitHub Actions`.
-4. In repository settings, open `Secrets and variables` -> `Actions`.
-5. Add a secret named `ACCESS_PASSWORD` with your shared team password.
+1. Go to **Settings → Pages** in the repository.
+2. Set **Source** to **GitHub Actions** and save.
+3. Go to **Settings → Secrets and variables → Actions** and add:
+   - `ACCESS_PASSWORD` — shared team password
+   - `NEXT_PUBLIC_SUPABASE_URL` — Supabase project URL *(optional)*
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — Supabase anon key *(optional)*
 
-If `ACCESS_PASSWORD` is not set, deployments default to password `12345`.
+After setup, every push to `master` builds and deploys automatically.
 
-### Deploy
+## Supabase Real-Time Sync
 
-- Push to the `master` branch.
-- The `Deploy to GitHub Pages` workflow will:
-  - install dependencies
-  - hash your `ACCESS_PASSWORD` secret
-  - build static output
-  - publish to GitHub Pages
+To share data live across multiple browsers or team members:
 
-## Notes
+1. Create a free [Supabase](https://supabase.com) project.
+2. Run `supabase-schema.sql` in the Supabase SQL Editor.
+3. Add the URL and anon key as environment variables (see above).
 
-- Because GitHub Pages is static hosting, API route handlers were removed.
-- The app starts with an empty dataset by default (no mock records).
-- With Supabase configured, all clients share one live dataset that syncs across browsers.
+With Supabase connected, all edits sync in real time across every open browser session.
 
-## Supabase Shared Sync
+## Access Control
 
-To sync edits across multiple browsers/team members, wire Supabase.
+The app uses a client-side password gate for casual team access. Users enter the shared password once per browser session. The password is validated against a SHA-256 hash injected at build time — it is **not** server-side authentication and should not be used to protect sensitive data.
 
-1. Create a Supabase project (free tier).
-2. In Supabase SQL Editor, run `supabase-schema.sql`.
-3. Add env vars in `.env.local` for local dev:
-
-```bash
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-```
-
-4. For GitHub Pages deploys, add the same two values as GitHub Actions secrets:
-  - `NEXT_PUBLIC_SUPABASE_URL`
-  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-
-How it works:
-
-- Team pages read shared data from Supabase and cache in browser storage.
-- Team pages save directly to Supabase using the anon key (via RLS policy in `supabase-schema.sql`).
-- Published updates sync to other browsers via Supabase realtime subscription.
-
-Coach form formats:
-
-- Player champ pool rows: `championId,proficiency,games`
-- Scrim game rows: `side,duration,killsFor,killsAgainst,objectiveControl`
