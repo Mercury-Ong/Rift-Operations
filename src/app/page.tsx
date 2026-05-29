@@ -1,132 +1,160 @@
 "use client";
 
+import { ChampionPickBar } from "@/components/dashboard/champion-pick-bar";
+import { DashboardCard } from "@/components/dashboard/dashboard-card";
+import { DashboardListRow } from "@/components/dashboard/dashboard-list-row";
 import { AppShell } from "@/components/app-shell";
-import { MeterBar } from "@/components/meter-bar";
 import { MetricCard } from "@/components/metric-card";
 import { ResultBadge } from "@/components/result-badge";
 import { useTeamDataset } from "@/lib/hooks/use-team-dataset";
+import { getDashboardInsightsFromDataset } from "@/lib/services/dashboardInsights";
 import { getTeamSnapshotFromDataset } from "@/lib/services/teamAnalytics";
+import { useMemo } from "react";
 
 export default function Home() {
   const { dataset } = useTeamDataset();
-  const snapshot = getTeamSnapshotFromDataset(dataset);
+  const snapshot = useMemo(() => getTeamSnapshotFromDataset(dataset), [dataset]);
+  const insights = useMemo(() => getDashboardInsightsFromDataset(dataset), [dataset]);
+
+  // Scale champion bars relative to the highest-count champion, not a hardcoded cap
+  const maxChampionGames = Math.max(1, ...snapshot.topChampions.map((e) => e.games));
 
   return (
     <AppShell
       title="Team Dashboard"
-      subtitle="Track current champion priorities, coordinated draft identities, and scrim trends in one analytics-first hub."
+      subtitle="Champion priorities, draft synergies, scrim trends and macro guides in one hub."
     >
+      {/* Row 1 – Metrics */}
       <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
           label="Scrim Win Rate"
           value={`${snapshot.winRate}%`}
-          detail="Based on current block history"
+          detail={`${snapshot.scrimCount} scrim block${snapshot.scrimCount !== 1 ? "s" : ""} recorded`}
           tone="positive"
-          icon="T"
+          icon="🏆"
         />
         <MetricCard
-          label="Objective Control"
-          value={`${snapshot.averageObjectiveControl}%`}
-          detail="Average across all recorded games"
+          label="Avg Kill Delta"
+          value={insights.formattedKillDelta}
+          detail="Blue kills minus red kills per game"
+          tone={insights.killDeltaTone}
+          icon="⚔️"
+        />
+        <MetricCard
+          label="Avg Game Length"
+          value={`${insights.averageGameDuration}m`}
+          detail="Average across all tracked scrim games"
           tone="focus"
-          icon="G"
+          icon="⏱️"
         />
         <MetricCard
-          label="Champion Pool Games"
-          value={String(snapshot.totalPoolGames)}
-          detail="Tracked player comfort sample"
-          icon="C"
-        />
-        <MetricCard
-          label="Active Roster"
-          value={String(snapshot.teamSize)}
-          detail={`${snapshot.scrimCount} scrim blocks in dataset`}
-          icon="R"
+          label="Draft Diversity"
+          value={`${insights.draftDiversity}%`}
+          detail="Unique champion share across scrim picks"
+          tone="neutral"
+          icon="🎯"
         />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[1.2fr_1fr]">
-        <article className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm">
-          <h2 className="text-xl font-semibold tracking-tight text-ink-strong">Most Played Champions</h2>
-          <p className="mt-1 text-sm text-ink-soft">
-            Prioritize prep around the highest volume comfort picks.
-          </p>
-          <div className="mt-6 space-y-4">
-            {snapshot.topChampions.map((entry) => (
-              <div key={entry.champion} className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <p className="font-medium text-ink-strong">{entry.champion}</p>
-                  <p className="text-ink-soft">
-                    {entry.games} games | Proficiency {entry.proficiency}/5
-                  </p>
-                </div>
-                <div className="h-2 rounded-full bg-slate-200">
-                  <div
-                    className="h-2 rounded-full bg-linear-to-r from-amber-500 to-orange-500"
-                    style={{ width: `${Math.min(100, (entry.games / 45) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </article>
-
-        <article className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm">
-          <h2 className="text-xl font-semibold tracking-tight text-ink-strong">Role Stability</h2>
-          <p className="mt-1 text-sm text-ink-soft">
-            Count of strong comfort picks per role at proficiency 4+.
-          </p>
-          <div className="mt-5 space-y-4">
-            {snapshot.roleCoverage.map((coverage) => (
-              <MeterBar
-                key={coverage.player}
-                label={`${coverage.role} | ${coverage.player}`}
-                value={Math.min(100, coverage.stablePool * 30)}
-                suffix=""
-              />
-            ))}
-          </div>
-        </article>
-      </section>
-
+      {/* Row 2 – Most Played + Synergies */}
       <section className="grid gap-6 lg:grid-cols-2">
-        <article className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm">
-          <h2 className="text-xl font-semibold tracking-tight text-ink-strong">Top Synergy Pairs</h2>
-          <div className="mt-4 space-y-3">
-            {snapshot.topSynergies.slice(0, 4).map((synergy) => (
-              <div
-                key={synergy.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
-              >
-                <div>
-                  <p className="font-medium text-ink-strong">{synergy.pairLabel}</p>
-                  <p className="text-sm text-ink-soft">
-                    {synergy.lanePair} | {synergy.sampleGames} games
-                  </p>
-                </div>
-                <p className="text-lg font-semibold text-ink-strong">{synergy.winRate}%</p>
-              </div>
-            ))}
+        <DashboardCard
+          title="Most Played Champions"
+          subtitle="Highest-volume picks from scrim history (team side only)."
+        >
+          <div className="mt-5 space-y-4">
+            {snapshot.topChampions.length ? (
+              snapshot.topChampions.map((entry) => (
+                <ChampionPickBar
+                  key={entry.champion}
+                  champion={entry.champion}
+                  games={entry.games}
+                  maxGames={maxChampionGames}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-ink-soft">No data yet. Add scrims to populate this.</p>
+            )}
           </div>
-        </article>
+        </DashboardCard>
 
-        <article className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm">
-          <h2 className="text-xl font-semibold tracking-tight text-ink-strong">Recent Scrim Results</h2>
+        <DashboardCard
+          title="Top Synergy Pairs"
+          subtitle="Best-performing champion pairings from synergy data."
+        >
           <div className="mt-4 space-y-3">
-            {snapshot.recentResults.map((scrim) => (
+            {snapshot.topSynergies.length ? (
+              snapshot.topSynergies.map((synergy) => (
+                <DashboardListRow
+                  key={synergy.id}
+                  left={
+                    <div>
+                      <p className="font-medium text-ink-strong">{synergy.pairLabel}</p>
+                      <p className="text-sm text-ink-soft">{synergy.lanePair} | {synergy.sampleGames} games</p>
+                    </div>
+                  }
+                  right={
+                    <p className="text-lg font-semibold text-ink-strong">{synergy.winRate}%</p>
+                  }
+                />
+              ))
+            ) : (
+              <p className="text-sm text-ink-soft">No synergy records yet. Add pairs in the synergies page.</p>
+            )}
+          </div>
+        </DashboardCard>
+      </section>
+
+      {/* Row 3 – Suggested Champion Matches per role */}
+      <section>
+        <DashboardCard
+          title="Suggested Champion Matches"
+          subtitle="Most-picked champion and backup per role from scrim history."
+        >
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+            {insights.suggestedMatches.map((match) => (
               <div
-                key={scrim.id}
-                className="flex items-center justify-between rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
+                key={match.role}
+                className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3"
               >
-                <div>
-                  <p className="font-medium text-ink-strong">{scrim.opponent}</p>
-                  <p className="text-sm text-ink-soft">{scrim.date}</p>
-                </div>
-                <ResultBadge result={scrim.result} />
+                <p className="text-xs font-semibold uppercase tracking-wider text-ink-soft">
+                  {match.roleLabel}
+                </p>
+                <p className="mt-1 font-semibold text-ink-strong">{match.primaryChampion}</p>
+                <p className="text-sm text-ink-soft">Backup: {match.backupChampion}</p>
+                <p className="mt-2 text-xs text-ink-soft">{match.player}</p>
+                <p className="text-xs text-ink-soft">{match.confidenceText}</p>
               </div>
             ))}
           </div>
-        </article>
+        </DashboardCard>
+      </section>
+
+      {/* Row 4 – Recent Scrims */}
+      <section>
+        <DashboardCard
+          title="Recent Scrim Results"
+          subtitle="Last 8 scrim blocks sorted by date."
+        >
+          <div className="mt-4 space-y-3">
+            {snapshot.recentResults.length ? (
+              snapshot.recentResults.map((scrim) => (
+                <DashboardListRow
+                  key={scrim.id}
+                  left={
+                    <div>
+                      <p className="font-medium text-ink-strong">{scrim.opponent}</p>
+                      <p className="text-sm text-ink-soft">{scrim.date}</p>
+                    </div>
+                  }
+                  right={<ResultBadge result={scrim.result} />}
+                />
+              ))
+            ) : (
+              <p className="text-sm text-ink-soft">No scrim results yet.</p>
+            )}
+          </div>
+        </DashboardCard>
       </section>
     </AppShell>
   );

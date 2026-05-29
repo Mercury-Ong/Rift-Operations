@@ -1,13 +1,6 @@
 import { TeamDataset } from "@/lib/models";
 import { teamRepository } from "@/lib/repositories/teamRepository";
-
-function average(values: number[]): number {
-  if (!values.length) {
-    return 0;
-  }
-
-  return values.reduce((sum, value) => sum + value, 0) / values.length;
-}
+import { average } from "@/lib/utils/math";
 
 export function getTeamSnapshot() {
   return getTeamSnapshotFromDataset(teamRepository.getDataset());
@@ -17,49 +10,39 @@ export function getTeamSnapshotFromDataset(data: TeamDataset) {
   const wins = data.scrims.filter((scrim) => scrim.result === "WIN").length;
   const winRate = data.scrims.length ? (wins / data.scrims.length) * 100 : 0;
 
-  const totalPoolGames = data.championPool.reduce(
-    (sum, item) => sum + item.games,
-    0,
-  );
   const championMap = new Map(
     data.champions.map((champion) => [champion.id, champion]),
   );
 
-  const topChampions = [...data.championPool]
-    .sort((a, b) => b.games - a.games)
+  // Count picks from team's side only (bluePicks when side=BLUE, redPicks when side=RED)
+  const pickCounts = new Map<string, number>();
+  for (const scrim of data.scrims) {
+    for (const game of scrim.games) {
+      const teamPicks =
+        game.side === "BLUE" ? (game.bluePicks ?? []) : (game.redPicks ?? []);
+      for (const pickId of teamPicks) {
+        if (pickId) {
+          pickCounts.set(pickId, (pickCounts.get(pickId) ?? 0) + 1);
+        }
+      }
+    }
+  }
+
+  const topChampions = [...pickCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
-    .map((entry) => ({
-      champion: championMap.get(entry.championId)?.name ?? entry.championId,
-      games: entry.games,
-      proficiency: entry.proficiency,
+    .map(([championId, games]) => ({
+      champion: championMap.get(championId)?.name ?? championId,
+      games,
     }));
 
-  const roleCoverage = data.players.map((player) => {
-    const stablePool = data.championPool.filter(
-      (entry) => entry.playerId === player.id && entry.proficiency >= 4,
-    ).length;
-
-    return {
-      player: player.summonerName,
-      role: player.role,
-      stablePool,
-    };
-  });
-
-  const totalGames = data.scrims.flatMap((scrim) => scrim.games);
-
   return {
-    teamSize: data.players.length,
     scrimCount: data.scrims.length,
     winRate: Number(winRate.toFixed(1)),
-    averageObjectiveControl: Number(
-      average(totalGames.map((game) => game.objectiveControl)).toFixed(1),
-    ),
-    totalPoolGames,
     topChampions,
-    roleCoverage,
     topSynergies: [...data.synergies]
       .sort((a, b) => b.winRate - a.winRate)
+      .slice(0, 5)
       .map((synergy) => ({
         ...synergy,
         pairLabel: `${championMap.get(synergy.championAId)?.name ?? synergy.championAId} + ${championMap.get(synergy.championBId)?.name ?? synergy.championBId}`,

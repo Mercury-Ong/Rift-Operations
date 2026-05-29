@@ -9,12 +9,9 @@ import {
   TeamDataset,
 } from "@/lib/models";
 import { getSupabaseClient } from "@/lib/supabase/client";
+import { normalizeId } from "@/lib/team/editor-utils";
 import { Session } from "@supabase/supabase-js";
 import { useEffect, useMemo, useState } from "react";
-
-function normalizeId(value: string): string {
-  return value.trim().toLowerCase().replace(/\s+/g, "-");
-}
 
 const roleOptions: PlayerRole[] = ["TOP", "JUNGLE", "MID", "ADC", "SUPPORT"];
 

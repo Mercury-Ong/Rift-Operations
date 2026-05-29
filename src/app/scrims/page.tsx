@@ -1,11 +1,18 @@
 "use client";
 
 import { AppShell } from "@/components/app-shell";
-import { ResultBadge } from "@/components/result-badge";
+import { ChampionPickColumns } from "@/components/scrims/champion-pick-columns";
+import { ScrimHistoryList } from "@/components/scrims/scrim-history-list";
 import { useTeamDataset } from "@/lib/hooks/use-team-dataset";
-import { ScrimOutcome, Side, TeamDataset } from "@/lib/models";
+import { ScrimOutcome, TeamDataset } from "@/lib/models";
+import {
+  arePicksComplete,
+  arePicksUnique,
+  createEmptyPicks,
+  parseKillScore,
+} from "@/lib/scrims/form-utils";
 import { getScrimHistoryFromDataset } from "@/lib/services/teamAnalytics";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 
 export default function ScrimsPage() {
   const { dataset, syncError, saveDataset, saveDatasetShared } =
@@ -18,13 +25,33 @@ export default function ScrimsPage() {
 
   const [scrimOpponent, setScrimOpponent] = useState("");
   const [scrimDate, setScrimDate] = useState("");
-  const [scrimPatch, setScrimPatch] = useState("16.11");
-  const [scrimFormat, setScrimFormat] = useState<"BO3" | "BO5">("BO3");
   const [scrimResult, setScrimResult] = useState<ScrimOutcome>("WIN");
   const [scrimNotes, setScrimNotes] = useState("");
-  const [scrimGamesLines, setScrimGamesLines] = useState(
-    "BLUE,31,14,8,73\nRED,34,10,12,55",
+  const [scrimDuration, setScrimDuration] = useState("30");
+  const [scrimKillScore, setScrimKillScore] = useState("12:8");
+  const [bluePicks, setBluePicks] = useState<string[]>(createEmptyPicks);
+  const [redPicks, setRedPicks] = useState<string[]>(createEmptyPicks);
+
+  const championOptions = useMemo(
+    () => [...dataset.champions].sort((a, b) => a.name.localeCompare(b.name)),
+    [dataset.champions],
   );
+  const championNameById = useMemo(
+    () => new Map(dataset.champions.map((champion) => [champion.id, champion.name])),
+    [dataset.champions],
+  );
+
+  function updateBluePick(index: number, championId: string) {
+    setBluePicks((previous) =>
+      previous.map((pick, pickIndex) => (pickIndex === index ? championId : pick)),
+    );
+  }
+
+  function updateRedPick(index: number, championId: string) {
+    setRedPicks((previous) =>
+      previous.map((pick, pickIndex) => (pickIndex === index ? championId : pick)),
+    );
+  }
 
   async function persistDataset(nextDataset: TeamDataset, successText: string) {
     setSaving(true);
@@ -48,50 +75,42 @@ export default function ScrimsPage() {
       return;
     }
 
-    const gameRows = scrimGamesLines
-      .split("\n")
-      .map((line) => line.trim())
-      .filter(Boolean);
+    const durationMinutes = Number(scrimDuration);
+    const parsedKillScore = parseKillScore(scrimKillScore);
 
-    if (!gameRows.length) {
-      setError("Add at least one game line.");
+    if (
+      Number.isNaN(durationMinutes) ||
+      !parsedKillScore
+    ) {
+      setError("Duration must be numeric and kill score must be in Blue:Red format (e.g. 21:15).");
       return;
     }
 
-    const parsedGames = [] as TeamDataset["scrims"][number]["games"];
+    const killsFor = parsedKillScore.blueKills;
+    const killsAgainst = parsedKillScore.redKills;
 
-    for (const row of gameRows) {
-      const [sideRaw, durationRaw, killsForRaw, killsAgainstRaw, objectiveRaw] =
-        row.split(",").map((segment) => segment.trim());
+    if (!arePicksComplete(bluePicks, redPicks)) {
+      setError("Select all 5 blue picks and all 5 red picks.");
+      return;
+    }
 
-      const side = sideRaw.toUpperCase() as Side;
-      const durationMinutes = Number(durationRaw);
-      const killsFor = Number(killsForRaw);
-      const killsAgainst = Number(killsAgainstRaw);
-      const objectiveControl = Number(objectiveRaw);
+    if (!arePicksUnique(bluePicks, redPicks)) {
+      setError("Champion picks must be unique across both teams.");
+      return;
+    }
 
-      if (
-        (side !== "BLUE" && side !== "RED") ||
-        Number.isNaN(durationMinutes) ||
-        Number.isNaN(killsFor) ||
-        Number.isNaN(killsAgainst) ||
-        Number.isNaN(objectiveControl)
-      ) {
-        setError(
-          "Game rows must be: side,duration,killsFor,killsAgainst,objectiveControl.",
-        );
-        return;
-      }
-
-      parsedGames.push({
-        game: parsedGames.length + 1,
-        side,
+    const parsedGames: TeamDataset["scrims"][number]["games"] = [
+      {
+        game: 1,
+        side: "BLUE",
         durationMinutes,
         killsFor,
         killsAgainst,
-        objectiveControl,
-      });
-    }
+        objectiveControl: 0,
+        bluePicks,
+        redPicks,
+      },
+    ];
 
     const nextScrimId = `scrim-${String(dataset.scrims.length + 1).padStart(3, "0")}`;
     const nextDataset: TeamDataset = {
@@ -102,8 +121,6 @@ export default function ScrimsPage() {
           id: nextScrimId,
           date: scrimDate,
           opponent: scrimOpponent.trim(),
-          patch: scrimPatch.trim() || "Unknown",
-          format: scrimFormat,
           result: scrimResult,
           notes: scrimNotes.trim(),
           games: parsedGames,
@@ -116,7 +133,10 @@ export default function ScrimsPage() {
     setScrimOpponent("");
     setScrimDate("");
     setScrimNotes("");
-    setScrimGamesLines("");
+    setScrimDuration("30");
+    setScrimKillScore("12:8");
+    setBluePicks(createEmptyPicks());
+    setRedPicks(createEmptyPicks());
   }
 
   return (
@@ -136,49 +156,77 @@ export default function ScrimsPage() {
           </div>
         </div>
 
-        <div className="mt-4 grid gap-2 md:grid-cols-2 lg:grid-cols-6">
-          <input
-            value={scrimOpponent}
-            onChange={(event) => setScrimOpponent(event.target.value)}
-            placeholder="Opponent"
-            className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
-          />
-          <input
-            type="date"
-            value={scrimDate}
-            onChange={(event) => setScrimDate(event.target.value)}
-            className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
-          />
-          <input
-            value={scrimPatch}
-            onChange={(event) => setScrimPatch(event.target.value)}
-            placeholder="Patch"
-            className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
-          />
-          <select
-            value={scrimFormat}
-            onChange={(event) => setScrimFormat(event.target.value as "BO3" | "BO5")}
-            className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
-          >
-            <option value="BO3">BO3</option>
-            <option value="BO5">BO5</option>
-          </select>
-          <select
-            value={scrimResult}
-            onChange={(event) => setScrimResult(event.target.value as ScrimOutcome)}
-            className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm text-ink-strong outline-none"
-          >
-            <option value="WIN">WIN</option>
-            <option value="LOSS">LOSS</option>
-          </select>
-          <button
-            onClick={onAddScrimResult}
-            disabled={saving}
-            className="rounded-xl bg-ink-strong px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            Add game
-          </button>
+        <div className="mt-4 grid gap-2 md:grid-cols-2 lg:grid-cols-4">
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            Opponent
+            <input
+              value={scrimOpponent}
+              onChange={(event) => setScrimOpponent(event.target.value)}
+              placeholder="Opponent"
+              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+            />
+          </label>
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            Date
+            <input
+              type="date"
+              value={scrimDate}
+              onChange={(event) => setScrimDate(event.target.value)}
+              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+            />
+          </label>
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            Result
+            <select
+              value={scrimResult}
+              onChange={(event) => setScrimResult(event.target.value as ScrimOutcome)}
+              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+            >
+              <option value="WIN">WIN</option>
+              <option value="LOSS">LOSS</option>
+            </select>
+          </label>
+          <div className="grid items-end">
+            <button
+              onClick={onAddScrimResult}
+              disabled={saving}
+              className="rounded-xl bg-ink-strong px-3 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              Add scrim
+            </button>
+          </div>
         </div>
+
+        <div className="mt-2 grid gap-2 md:grid-cols-2">
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            Duration (minutes)
+            <input
+              type="number"
+              min={1}
+              value={scrimDuration}
+              onChange={(event) => setScrimDuration(event.target.value)}
+              placeholder="Duration (minutes)"
+              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+            />
+          </label>
+          <label className="grid gap-1 text-xs font-semibold uppercase tracking-wider text-ink-soft">
+            Kill Score (Blue:Red)
+            <input
+              value={scrimKillScore}
+              onChange={(event) => setScrimKillScore(event.target.value)}
+              placeholder="e.g. 21:15"
+              className="rounded-xl border border-border-soft bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-ink-strong outline-none"
+            />
+          </label>
+        </div>
+
+        <ChampionPickColumns
+          championOptions={championOptions}
+          bluePicks={bluePicks}
+          redPicks={redPicks}
+          onBluePickChange={updateBluePick}
+          onRedPickChange={updateRedPick}
+        />
 
         <textarea
           value={scrimNotes}
@@ -187,87 +235,13 @@ export default function ScrimsPage() {
           placeholder="Coach notes"
         />
 
-        <textarea
-          value={scrimGamesLines}
-          onChange={(event) => setScrimGamesLines(event.target.value)}
-          className="mt-2 h-24 w-full rounded-xl border border-border-soft bg-white px-3 py-2 text-xs text-ink-strong outline-none"
-          placeholder="side,duration,killsFor,killsAgainst,objectiveControl"
-        />
-
         {message ? <p className="mt-3 text-sm text-emerald-700">{message}</p> : null}
         {error ? <p className="mt-2 text-sm text-rose-700">{error}</p> : null}
         {syncError ? <p className="mt-2 text-sm text-rose-700">Sync: {syncError}</p> : null}
       </section>
 
       <section className="space-y-4">
-        {scrims.length ? (
-          scrims.map((scrim) => (
-            <article
-              key={scrim.id}
-              className="rounded-3xl border border-border-soft bg-white/85 p-5 shadow-sm"
-            >
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <div>
-                  <h2 className="text-xl font-semibold tracking-tight text-ink-strong">
-                    vs {scrim.opponent}
-                  </h2>
-                  <p className="text-sm text-ink-soft">
-                    {scrim.date} | Patch {scrim.patch} | {scrim.format}
-                  </p>
-                </div>
-                <ResultBadge result={scrim.result} />
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Game Score</p>
-                  <p className="mt-1 text-lg font-semibold text-ink-strong">{scrim.gameScore}</p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Average Duration</p>
-                  <p className="mt-1 text-lg font-semibold text-ink-strong">
-                    {scrim.averageDuration}m
-                  </p>
-                </div>
-                <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
-                  <p className="text-xs uppercase tracking-wider text-ink-soft">Notes</p>
-                  <p className="mt-1 text-sm text-ink-strong">{scrim.notes}</p>
-                </div>
-              </div>
-
-              <div className="mt-4 overflow-x-auto">
-                <table className="min-w-full border-separate border-spacing-y-2 text-sm">
-                  <thead>
-                    <tr className="text-left text-ink-soft">
-                      <th className="px-3">Game</th>
-                      <th className="px-3">Side</th>
-                      <th className="px-3">Duration</th>
-                      <th className="px-3">Kills</th>
-                      <th className="px-3">Objective Control</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {scrim.games.map((game) => (
-                      <tr key={game.game} className="rounded-2xl bg-slate-50 text-ink-strong">
-                        <td className="rounded-l-xl px-3 py-2">{game.game}</td>
-                        <td className="px-3 py-2">{game.side}</td>
-                        <td className="px-3 py-2">{game.durationMinutes}m</td>
-                        <td className="px-3 py-2">
-                          {game.killsFor}-{game.killsAgainst}
-                        </td>
-                        <td className="rounded-r-xl px-3 py-2">{game.objectiveControl}%</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </article>
-          ))
-        ) : (
-          <article className="rounded-3xl border border-border-soft bg-white/85 p-5 text-sm text-ink-soft shadow-sm">
-            No scrim history yet. Add your first result above.
-          </article>
-        )}
+        <ScrimHistoryList scrims={scrims} championNameById={championNameById} />
       </section>
     </AppShell>
   );

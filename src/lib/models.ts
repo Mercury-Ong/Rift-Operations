@@ -49,15 +49,17 @@ export interface ScrimGame {
   durationMinutes: number;
   killsFor: number;
   killsAgainst: number;
-  objectiveControl: number;
+  objectiveControl?: number;
+  bluePicks?: string[];
+  redPicks?: string[];
 }
 
 export interface ScrimBlock {
   id: string;
   date: string;
   opponent: string;
-  patch: string;
-  format: "BO3" | "BO5";
+  patch?: string;
+  format?: "BO3" | "BO5";
   result: ScrimOutcome;
   notes: string;
   games: ScrimGame[];
