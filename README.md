@@ -1,36 +1,88 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# LoL Team Tracker
 
-## Getting Started
+A modern League of Legends team platform to track:
 
-First, run the development server:
+- Champion pools
+- Team synergies
+- Scrim results and history
+- Analytics dashboard snapshots
+
+Built with Next.js + TypeScript + Tailwind CSS.
+
+## Local Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open http://localhost:3000
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Team Password Gate
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+This app includes a client-side password gate for shared team access.
 
-## Learn More
+- Users must enter the shared password before viewing the dashboard.
+- Access is remembered in browser session storage.
+- The password is validated using a SHA-256 hash injected at build time.
 
-To learn more about Next.js, take a look at the following resources:
+Important: This is a frontend gate and not server-side authentication.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Current default password: `12345`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy to GitHub Pages
 
-## Deploy on Vercel
+The repository includes an automated GitHub Actions workflow at `.github/workflows/deploy-pages.yml`.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### One-time GitHub setup
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Push this repository to GitHub.
+2. In repository settings, open `Pages`.
+3. Set `Build and deployment` source to `GitHub Actions`.
+4. In repository settings, open `Secrets and variables` -> `Actions`.
+5. Add a secret named `ACCESS_PASSWORD` with your shared team password.
+
+If `ACCESS_PASSWORD` is not set, deployments default to password `12345`.
+
+### Deploy
+
+- Push to the `master` branch.
+- The `Deploy to GitHub Pages` workflow will:
+  - install dependencies
+  - hash your `ACCESS_PASSWORD` secret
+  - build static output
+  - publish to GitHub Pages
+
+## Notes
+
+- Because GitHub Pages is static hosting, API route handlers were removed.
+- The app starts with an empty dataset by default (no mock records).
+- With Supabase configured, all clients share one live dataset that syncs across browsers.
+
+## Supabase Shared Sync
+
+To sync edits across multiple browsers/team members, wire Supabase.
+
+1. Create a Supabase project (free tier).
+2. In Supabase SQL Editor, run `supabase-schema.sql`.
+3. Add env vars in `.env.local` for local dev:
+
+```bash
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
+
+4. For GitHub Pages deploys, add the same two values as GitHub Actions secrets:
+  - `NEXT_PUBLIC_SUPABASE_URL`
+  - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+
+How it works:
+
+- Team pages read shared data from Supabase and cache in browser storage.
+- Team pages save directly to Supabase using the anon key (via RLS policy in `supabase-schema.sql`).
+- Published updates sync to other browsers via Supabase realtime subscription.
+
+Coach form formats:
+
+- Player champ pool rows: `championId,proficiency,games`
+- Scrim game rows: `side,duration,killsFor,killsAgainst,objectiveControl`
